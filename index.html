@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DECRYPT — Dispatch Console</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="dark">
+
+  <div class="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-name">Decrypt</span>
+        <span class="brand-sub">Email dispatch console</span>
+      </div>
+
+      <!-- NEW: Main Navigation Tabs -->
+      <div class="segmented nav-tabs" role="tablist" aria-label="Main Navigation">
+        <button type="button" class="segment is-active" data-view="compose-view" role="tab" aria-selected="true">Compose</button>
+        <button type="button" class="segment" data-view="history-view" role="tab" aria-selected="false">History</button>
+      </div>
+
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.6"/>
+          <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+        </svg>
+        <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M20.2 14.6A8.5 8.5 0 1 1 9.4 3.8a6.8 6.8 0 0 0 10.8 10.8Z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- VIEW 1: COMPOSE & DISPATCH -->
+    <main class="stage app-view is-active" id="compose-view">
+      <section class="panel form-panel">
+        <div class="panel-head">
+          <h1>Bulk dispatch</h1>
+          <p>Send an update to everyone in your DECRYPT registration sheet.</p>
+        </div>
+
+        <form id="bulk-form" novalidate>
+          <div class="field">
+            <label id="audience-label">Audience</label>
+            <div class="segmented audience-tabs" role="radiogroup" aria-labelledby="audience-label">
+              <button type="button" class="segment is-active" data-value="all" role="radio" aria-checked="true">
+                All participants
+              </button>
+              <button type="button" class="segment" data-value="uncheckin" role="radio" aria-checked="false">
+                Not checked in
+              </button>
+            </div>
+            <input type="hidden" id="target-filter" value="all">
+          </div>
+
+          <div class="field">
+            <label for="email-subject">Subject line</label>
+            <input type="text" id="email-subject" required placeholder="Important update regarding DECRYPT 2.0">
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label for="email-body">Email body</label>
+              <span class="field-hint">Line breaks create paragraphs</span>
+            </div>
+
+            <div class="token-row" aria-label="Insert a dynamic tag">
+              <button type="button" class="token-chip" data-token="{{Name}}">{{Name}}</button>
+              <button type="button" class="token-chip" data-token="{{AccessCode}}">{{AccessCode}}</button>
+            </div>
+
+            <textarea id="email-body" required placeholder="Hey {{Name}},&#10;&#10;Your access code is {{AccessCode}}."></textarea>
+          </div>
+
+          <button type="submit" id="dispatch-btn" class="btn-primary">
+            <span class="btn-label">Dispatch to audience</span>
+          </button>
+        </form>
+      </section>
+
+      <aside class="panel status-panel">
+        <div class="panel-head">
+          <h2>Dispatch status</h2>
+          <p id="status-summary">Nothing sent yet.</p>
+        </div>
+
+        <ol class="stepper" id="stepper">
+          <li class="step is-active" data-step="queued">
+            <span class="step-dot"></span>
+            <div class="step-copy">
+              <p class="step-title">Queued</p>
+              <p class="step-desc">Ready when you are.</p>
+            </div>
+          </li>
+          <li class="step" data-step="sending">
+            <span class="step-dot"></span>
+            <div class="step-copy">
+              <p class="step-title">Sending</p>
+              <p class="step-desc">Looping through sheet rows.</p>
+            </div>
+          </li>
+          <li class="step" data-step="done">
+            <span class="step-dot"></span>
+            <div class="step-copy">
+              <p class="step-title">Complete</p>
+              <p class="step-desc">Delivery finished.</p>
+            </div>
+          </li>
+        </ol>
+
+        <p class="status-note" id="status-note">Keep this tab open while a dispatch is running.</p>
+      </aside>
+    </main>
+
+    <!-- VIEW 2: CAMPAIGN HISTORY -->
+    <main class="stage app-view" id="history-view" style="display: none; grid-template-columns: 1fr;">
+      <section class="panel">
+        <div class="panel-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h1>Campaign History</h1>
+            <p>Analytics, delivery logs, and open rates.</p>
+          </div>
+          <button class="btn-secondary" id="refresh-history-btn" type="button" style="padding: 10px 16px;">Refresh logs</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Campaign Subject</th>
+                <th>Sent</th>
+                <th>Opens</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--text-tertiary);">Loading campaign data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <button class="modal-backdrop" id="modal-backdrop" tabindex="-1" aria-hidden="true"></button>
+
+  <section class="modal" id="confirm-modal" role="alertdialog" aria-hidden="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <h2 id="modal-title">Send to your audience?</h2>
+    <p id="modal-desc">This emails everyone in the selected group right away — it can't be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-cancel" type="button">Cancel</button>
+      <button class="btn-primary" id="modal-confirm" type="button">Send emails</button>
+    </div>
+  </section>
+
+<script src="script.js?v=1.1"></script>
+</body>
+</html>
