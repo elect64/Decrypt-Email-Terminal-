@@ -180,10 +180,12 @@ modalConfirm.addEventListener("click", async () => {
   setStep("sending", "Sending in progress.", "Looping through sheet rows — this may take a minute depending on list size.");
 
   const payload = {
-    action: "bulk_email",
-    targetFilter: targetFilter.value,
-    subject: document.getElementById("email-subject").value,
-    htmlBody: emailBody.value
+  action: "bulk_email",
+  targetFilter: targetFilter.value,
+  subject: document.getElementById("email-subject").value,
+  htmlBody: emailBody.value,
+  bannerUrl: inputBanner.value,  // NEW
+  imageUrl: inputImage.value     // NEW
   };
 
   try {
@@ -401,7 +403,7 @@ function updatePreview() {
             ${imageHtml}
             <hr style="border:0; border-top:1px dashed #1A4D23; margin:30px 0 20px 0;" />
             <p style="font-size:11px; color:#6B7D71; margin:0; text-align:center; letter-spacing:1px;">
-              Knowledge should not stay locked.<br><br>DECRYPT 2.0 • OCTOBER 2026
+              Creativity With Intentions.<br><br>DECRYPT 2.0 • OCTOBER 2026
             </p>
           </div>
         </div>
@@ -423,15 +425,3 @@ function updatePreview() {
 // Initial render
 updatePreview();
 
-/* -----------------------------------------------------------
-   Updated Payload Builder (Inside modalConfirm.addEventListener)
------------------------------------------------------------ */
-// Find your payload object inside the modalConfirm click listener and update it to this:
-  const payload = {
-    action: "bulk_email",
-    targetFilter: targetFilter.value,
-    subject: document.getElementById("email-subject").value,
-    htmlBody: emailBody.value,
-    bannerUrl: inputBanner.value,  // NEW
-    imageUrl: inputImage.value     // NEW
-  };
