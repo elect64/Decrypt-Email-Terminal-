@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -50,14 +52,15 @@
           <div class="field">
             <label id="audience-label">Audience</label>
             <div class="segmented audience-tabs" role="radiogroup" aria-labelledby="audience-label">
-              <button type="button" class="segment is-active" data-value="all" role="radio" aria-checked="true">
-                All participants
-              </button>
-              <button type="button" class="segment" data-value="uncheckin" role="radio" aria-checked="false">
-                Not checked in
-              </button>
+              <button type="button" class="segment is-active" data-value="all" role="radio" aria-checked="true">All participants</button>
+              <button type="button" class="segment" data-value="uncheckin" role="radio" aria-checked="false">Not checked in</button>
             </div>
             <input type="hidden" id="target-filter" value="all">
+          </div>
+
+          <div class="field">
+            <label for="banner-url">Banner Image URL (Optional)</label>
+            <input type="url" id="banner-url" placeholder="https://i.ibb.co/.../banner.png">
           </div>
 
           <div class="field">
@@ -70,13 +73,16 @@
               <label for="email-body">Email body</label>
               <span class="field-hint">Line breaks create paragraphs</span>
             </div>
-
             <div class="token-row" aria-label="Insert a dynamic tag">
               <button type="button" class="token-chip" data-token="{{Name}}">{{Name}}</button>
               <button type="button" class="token-chip" data-token="{{AccessCode}}">{{AccessCode}}</button>
             </div>
-
             <textarea id="email-body" required placeholder="Hey {{Name}},&#10;&#10;Your access code is {{AccessCode}}."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="image-url">Inline Image URL (Optional)</label>
+            <input type="url" id="image-url" placeholder="https://i.ibb.co/.../image.png">
           </div>
 
           <button type="submit" id="dispatch-btn" class="btn-primary">
@@ -85,50 +91,54 @@
         </form>
       </section>
 
-      <aside class="panel status-panel">
-        <div class="panel-head">
-          <h2>Dispatch status</h2>
-          <p id="status-summary">Nothing sent yet.</p>
+      <aside class="panel status-panel" style="display:flex; flex-direction:column; padding:0;">
+        <div class="segmented aside-tabs" style="margin: 20px; width: calc(100% - 40px);">
+          <button type="button" class="segment is-active" data-pane="pane-preview">Live Preview</button>
+          <button type="button" class="segment" data-pane="pane-status">Status</button>
         </div>
 
-        <ol class="stepper" id="stepper">
-          <li class="step is-active" data-step="queued">
-            <span class="step-dot"></span>
-            <div class="step-copy">
-              <p class="step-title">Queued</p>
-              <p class="step-desc">Ready when you are.</p>
-            </div>
-          </li>
-          <li class="step" data-step="sending">
-            <span class="step-dot"></span>
-            <div class="step-copy">
-              <p class="step-title">Sending</p>
-              <p class="step-desc">Looping through sheet rows.</p>
-            </div>
-          </li>
-          <li class="step" data-step="done">
-            <span class="step-dot"></span>
-            <div class="step-copy">
-              <p class="step-title">Complete</p>
-              <p class="step-desc">Delivery finished.</p>
-            </div>
-          </li>
-        </ol>
+        <div id="pane-preview" class="aside-pane is-active" style="flex:1; display:flex; flex-direction:column;">
+          <iframe id="email-preview-frame" style="flex:1; width:100%; border:none; background-color:#050D08;"></iframe>
+        </div>
 
-        <p class="status-note" id="status-note">Keep this tab open while a dispatch is running.</p>
+        <div id="pane-status" class="aside-pane" style="display:none; padding: 0 20px 20px;">
+          <div class="panel-head">
+            <h2>Dispatch status</h2>
+            <p id="status-summary">Nothing sent yet.</p>
+          </div>
+          <ol class="stepper" id="stepper">
+            <li class="step is-active" data-step="queued">
+              <span class="step-dot"></span>
+              <div class="step-copy"><p class="step-title">Queued</p><p class="step-desc">Ready when you are.</p></div>
+            </li>
+            <li class="step" data-step="sending">
+              <span class="step-dot"></span>
+              <div class="step-copy"><p class="step-title">Sending</p><p class="step-desc">Looping through sheet rows.</p></div>
+            </li>
+            <li class="step" data-step="done">
+              <span class="step-dot"></span>
+              <div class="step-copy"><p class="step-title">Complete</p><p class="step-desc">Delivery finished.</p></div>
+            </li>
+          </ol>
+          <p class="status-note" id="status-note">Keep this tab open while a dispatch is running.</p>
+        </div>
       </aside>
     </main>
 
     <!-- VIEW 2: CAMPAIGN HISTORY -->
     <main class="stage app-view" id="history-view" style="display: none; grid-template-columns: 1fr;">
-      <section class="panel">
-        <div class="panel-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
-          <div>
-            <h1>Campaign History</h1>
-            <p>Analytics, delivery logs, and open rates.</p>
-          </div>
-          <button class="btn-secondary" id="refresh-history-btn" type="button" style="padding: 10px 16px;">Refresh logs</button>
-        </div>
+  <section class="panel">
+    <div class="panel-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h1>Campaign History & Analytics</h1>
+        <p>Performance trends, open rates, and engagement graphs.</p>
+      </div>
+      <button class="btn-secondary" id="refresh-history-btn" type="button" style="padding: 10px 16px;">Refresh logs</button>
+    </div>
+
+      <div class="chart-container" style="position: relative; height: 300px; width: 100%; margin-bottom: 30px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 15px;">
+        <canvas id="campaignChart"></canvas>
+      </div>
 
         <div class="table-responsive">
           <table class="history-table">
@@ -138,7 +148,8 @@
                 <th>Campaign Subject</th>
                 <th>Sent</th>
                 <th>Opens</th>
-                <th>Rate</th>
+                <th>Clicks</th>
+                <th>CTR</th>
               </tr>
             </thead>
             <tbody id="history-body">

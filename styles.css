@@ -518,3 +518,34 @@ input:focus, textarea:focus {
   font-weight: 600;
   color: var(--accent);
 }
+
+/* -----------------------------------------------------------
+   Aside Pane Routing (Preview/Status)
+----------------------------------------------------------- */
+.aside-tabs {
+  margin-bottom: 0;
+  border-radius: 8px;
+}
+
+.aside-pane {
+  display: none;
+  animation: fadeIn 0.3s var(--ease);
+}
+
+.aside-pane.is-active {
+  display: flex;
+}
+
+#email-preview-frame {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg);
+}
+
+#email-preview-frame::-webkit-scrollbar {
+  width: 6px;
+}
+
+#email-preview-frame::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}

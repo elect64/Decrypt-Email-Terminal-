@@ -1,5 +1,5 @@
 // Your deployed Google Apps Script Web App URL
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1RW7uYFfPhUhbJ1RhZlohJBpZJkusVt5kG6jvX8knyZUUWj9-dqc7DvI_gZQmsDvcPw/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxmQTZXXAnZj22he76o02R4DYK44sgZFPGQK0j0SaScauSu9rs7_xrCxOKyMoTfz8zZQ/exec";
 
 /* -----------------------------------------------------------
    Theme
@@ -221,18 +221,21 @@ const historyBody = document.getElementById('history-body');
 
 refreshBtn.addEventListener("click", loadHistory);
 
+let campaignChartInstance = null; // Track chart instance to prevent duplication bugs
+
 async function loadHistory() {
-  historyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--text-tertiary);">Fetching logs from database...</td></tr>';
+  historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-tertiary);">Fetching logs from database...</td></tr>';
   
   try {
     const response = await fetch(`${SCRIPT_URL}?action=get_campaigns`);
     const data = await response.json();
     
     if (!data.campaigns || data.campaigns.length === 0) {
-      historyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--text-tertiary);">No campaigns sent yet.</td></tr>';
+      historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-tertiary);">No campaigns sent yet.</td></tr>';
       return;
     }
 
+    // 1. Populate Table Rows (Existing logic)
     historyBody.innerHTML = data.campaigns.map(camp => `
       <tr>
         <td>
@@ -245,12 +248,190 @@ async function loadHistory() {
         </td>
         <td><span class="stat-badge">${camp.sent}</span></td>
         <td title="Opened by:\n${camp.openedBy || 'None yet'}">
-          <span class="stat-badge highlight">${camp.opens}</span>
+          <span class="stat-badge highlight">${camp.opens} (${camp.openRate})</span>
         </td>
-        <td class="rate-text">${camp.openRate}</td>
+        <td title="Clicked by:\n${camp.clickedBy || 'None yet'}">
+          <span class="stat-badge" style="background: rgba(51, 227, 156, 0.2); color: var(--accent);">${camp.clicks}</span>
+        </td>
+        <td class="rate-text">${camp.ctr}</td>
       </tr>
     `).join('');
+
+    // 2. Render Graphical Chart (New logic)
+    renderCampaignChart(data.campaigns.reverse()); // Reverse to show chronological order left-to-right
+
   } catch (err) {
-    historyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--danger);">Failed to load history. Ensure your Google Script is deployed with the get_campaigns action.</td></tr>';
+    historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--danger);">Failed to load history. Ensure your Google Script is deployed properly.</td></tr>';
   }
 }
+
+function renderCampaignChart(campaigns) {
+  const ctx = document.getElementById('campaignChart').getContext('2d');
+  
+  // Extract labels (Subjects or IDs) and metrics datasets
+  const labels = campaigns.map(c => c.subject.length > 20 ? c.subject.substring(0, 20) + '...' : c.subject);
+  const sentData = campaigns.map(c => c.sent);
+  const opensData = campaigns.map(c => c.opens);
+  const clicksData = campaigns.map(c => c.clicks);
+
+  // Destroy previous instance if it exists to prevent overlapping redraws
+  if (campaignChartInstance) {
+    campaignChartInstance.destroy();
+  }
+
+  // Detect current theme colors for chart text styling
+  const isDark = document.body.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#8CA398' : '#5C6E63';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(6, 15, 10, 0.05)';
+
+  campaignChartInstance = new Chart(ctx, {
+    type: 'bar', // Can be changed to 'line' for trend lines
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Sent',
+          data: sentData,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(6, 15, 10, 0.1)',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(6, 15, 10, 0.2)',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'Opens',
+          data: opensData,
+          backgroundColor: '#33E39C',
+          borderRadius: 4
+        },
+        {
+          label: 'Clicks',
+          data: clicksData,
+          backgroundColor: '#38BDF8', // Sky blue accent for clicks
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { color: textColor, font: { family: 'JetBrains Mono', size: 11 } }
+        },
+        tooltip: {
+          backgroundColor: isDark ? '#0D1712' : '#FFFFFF',
+          titleColor: isDark ? '#F2F7F4' : '#0B140F',
+          bodyColor: textColor,
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderWidth: 1
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 }, precision: 0 }
+        }
+      }
+    }
+  });
+}
+
+/* -----------------------------------------------------------
+   Aside Tabs (Preview vs Status)
+----------------------------------------------------------- */
+const asideTabs = document.querySelectorAll(".aside-tabs .segment");
+const asidePanes = document.querySelectorAll(".aside-pane");
+
+asideTabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    asideTabs.forEach(t => t.classList.remove("is-active"));
+    tab.classList.add("is-active");
+    asidePanes.forEach(pane => {
+      pane.style.display = pane.id === tab.dataset.pane ? "flex" : "none";
+    });
+  });
+});
+
+/* -----------------------------------------------------------
+   Live Preview Engine
+----------------------------------------------------------- */
+const previewFrame = document.getElementById("email-preview-frame");
+const inputBanner = document.getElementById("banner-url");
+const inputBody = document.getElementById("email-body");
+const inputImage = document.getElementById("image-url");
+
+function updatePreview() {
+  const rawText = inputBody.value || "Hey [Name],\n\nStart typing to preview your email...";
+  
+  // Format paragraphs
+  const formattedParagraphs = rawText.split('\n')
+    .map(p => p.trim() ? `<p style="margin-bottom:16px;">${p}</p>` : '')
+    .join('');
+
+  // Format Dynamic Tags for preview purposes
+  const previewContent = formattedParagraphs
+    .replace(/{{Name}}/g, "<span style='color:#3ED97A;'>Alex</span>")
+    .replace(/{{AccessCode}}/g, "<span style='color:#3ED97A;'>DEC2.O-X8B9Q</span>");
+
+  const bannerUrl = inputBanner.value;
+  const bannerHtml = bannerUrl 
+    ? `<img src="${bannerUrl}" style="width:100%; display:block; border-bottom:1px solid #1A4D23;" />`
+    : `<div style="background-color:#1A4D23; padding:2px;"></div>`;
+
+  const imageUrl = inputImage.value;
+  const imageHtml = imageUrl 
+    ? `<div style="margin:25px 0; text-align:center;"><img src="${imageUrl}" style="max-width:100%; border-radius:8px; border:1px solid #1A4D23;" /></div>`
+    : ``;
+
+  const html = `
+    <html><body style="margin:0; padding:0; background-color:#050D08;">
+      <div style="background-color:#050D08; padding:20px 10px; font-family:'Courier New', Courier, monospace; color:#E8F5EC;">
+        <div style="max-width:560px; margin:0 auto; background-color:#0A1C10; border:1px solid #1A4D23; border-radius:12px; overflow:hidden;">
+          ${bannerHtml}
+          <div style="padding:32px 36px;">
+            <p style="margin:0 0 20px 0; color:#3ED97A; font-size:11px; letter-spacing:3px; font-weight:700; text-transform:uppercase;">DECRYPT 2.0 UPDATE</p>
+            <div style="font-size:14px; line-height:1.7; color:#E8F5EC;">
+              ${previewContent}
+            </div>
+            ${imageHtml}
+            <hr style="border:0; border-top:1px dashed #1A4D23; margin:30px 0 20px 0;" />
+            <p style="font-size:11px; color:#6B7D71; margin:0; text-align:center; letter-spacing:1px;">
+              Knowledge should not stay locked.<br><br>DECRYPT 2.0 • OCTOBER 2026
+            </p>
+          </div>
+        </div>
+      </div>
+    </body></html>
+  `;
+  
+  const doc = previewFrame.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+}
+
+// Attach event listeners to update the preview on typing
+[inputBanner, inputBody, inputImage].forEach(el => {
+  el.addEventListener('input', updatePreview);
+});
+
+// Initial render
+updatePreview();
+
+/* -----------------------------------------------------------
+   Updated Payload Builder (Inside modalConfirm.addEventListener)
+----------------------------------------------------------- */
+// Find your payload object inside the modalConfirm click listener and update it to this:
+  const payload = {
+    action: "bulk_email",
+    targetFilter: targetFilter.value,
+    subject: document.getElementById("email-subject").value,
+    htmlBody: emailBody.value,
+    bannerUrl: inputBanner.value,  // NEW
+    imageUrl: inputImage.value     // NEW
+  };
