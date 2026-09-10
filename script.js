@@ -1,5 +1,5 @@
 // Your deployed Google Apps Script Web App URL
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxmQTZXXAnZj22he76o02R4DYK44sgZFPGQK0j0SaScauSu9rs7_xrCxOKyMoTfz8zZQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQLsllfL09f26ZvS2WHvn4Qa2nicqwaYMLF41z3Pz_RPGqb1vZJF6NWiolFc4gtfYn8A/exec";
 
 /* -----------------------------------------------------------
    Theme
@@ -392,7 +392,7 @@ function updatePreview() {
 
   const html = `
     <html><body style="margin:0; padding:0; background-color:#050D08;">
-      <div style="background-color:#050D08; padding:20px 10px; font-family:'Courier New', Courier, monospace; color:#E8F5EC;">
+      <div style="background-color:#050D08; padding:20px 10px; font-family:'Helvetica Neue', Arial, sans-serif; color:#E8F5EC;">
         <div style="max-width:560px; margin:0 auto; background-color:#0A1C10; border:1px solid #1A4D23; border-radius:12px; overflow:hidden;">
           ${bannerHtml}
           <div style="padding:32px 36px;">
@@ -403,7 +403,7 @@ function updatePreview() {
             ${imageHtml}
             <hr style="border:0; border-top:1px dashed #1A4D23; margin:30px 0 20px 0;" />
             <p style="font-size:11px; color:#6B7D71; margin:0; text-align:center; letter-spacing:1px;">
-              Creativity With Intentions.<br><br>DECRYPT 2.0 • OCTOBER 2026
+              Creativity With Intention -  Building Purposeful Creators .<br><br>DECRYPT 2.0 • OCTOBER 2026
             </p>
           </div>
         </div>
