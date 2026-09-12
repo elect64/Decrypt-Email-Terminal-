@@ -1,5 +1,5 @@
 // Your deployed Google Apps Script Web App URL
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQLsllfL09f26ZvS2WHvn4Qa2nicqwaYMLF41z3Pz_RPGqb1vZJF6NWiolFc4gtfYn8A/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFpYLNWXgjLO-27Txb2E-Qi3sLSy2WcEpmnhKvq_oYdA9sbK24NbzIQ-Fu20n-X6uapw/exec";
 
 /* -----------------------------------------------------------
    Theme
